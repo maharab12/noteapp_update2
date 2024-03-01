@@ -1,71 +1,116 @@
+ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 
-class detail extends StatefulWidget {
+class Detail extends StatefulWidget {
+  final QueryDocumentSnapshot<Object?> document;
 
-     final QueryDocumentSnapshot<Object?>docement;
-    const detail({Key? key, required this.docement}) : super(key: key);
-
+  const Detail({Key? key, required this.document}) : super(key: key);
 
   @override
-  State<detail> createState() => _detailState();
+  State<Detail> createState() => _DetailState();
 }
 
-class _detailState extends State<detail> {
-  late TextEditingController _titlecontroller;
-  late TextEditingController _Subtitlecontroller;
-  late String _initialText;
-  late String title='';
+class _DetailState extends State<Detail> {
+  late TextEditingController _titleController;
+  late TextEditingController _subtitleController;
+  late String _initialTitle;
+  late String _initialSubtitle;
+  late String _newTitle;
+  late String _newSubtitle;
+  
 
   @override
   void initState() {
     super.initState();
-    title=widget.docement['Title'] ?? '';
-    _initialText = widget.docement['Subtitle'] ?? '';
-    _titlecontroller =TextEditingController(text: title);
-    _Subtitlecontroller = TextEditingController(text: _initialText);
+    _initialTitle = widget.document['Title'] ?? '';
+    _initialSubtitle = widget.document['Subtitle'] ?? '';
+    _newTitle = _initialTitle;
+    _newSubtitle = _initialSubtitle;
+    _titleController = TextEditingController(text: _newTitle);
+    _subtitleController = TextEditingController(text: _newSubtitle);
   }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          onChanged: (value){
-            title=value;
-          },
-          controller: _titlecontroller,
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    return SafeArea(
+      child: Scaffold(
+        body: Column(
+          children: [
+            Container(
+              height: MediaQuery.of(context).size.height/10,
+              color: Colors.black12,
+                child: Stack(
+                  children: [
+                    Padding(
+                      
+                      padding: EdgeInsets.only(left: 40),
+                      child: TextField(
+                        decoration: InputDecoration(border: InputBorder.none),
+                        style: TextStyle(fontSize: 30),
+                        maxLength: 60,
+                        onChanged: (value) {
+                          setState(() {
+                            _newTitle = value;
+                          });
+                        },
+                        controller: _titleController,
+                      ),
+                    ),
+                    Positioned(
+                      left: 2,
+                      top: -2,
+                      child: IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: Icon(Icons.arrow_back),
+                      ),
+                    ),
+                  ],
+                ),
+            ),
+            Expanded(
+              child: ListView(
+                children: [
+                  TextField(
+                    onChanged: (newVal) {
+                      setState(() {
+                        _newSubtitle = newVal;
+                      });
+                    },
+                    controller: _subtitleController,
+                    maxLines: null,
+                    decoration: InputDecoration(border: InputBorder.none),
+                    style: TextStyle(fontSize: 32),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        backgroundColor: Colors.black12,),
-      body:TextField(
-
-        onChanged: (newval){
-          setState(() {
-            _initialText=newval;
-          });
-        },
-        controller: _Subtitlecontroller,
-        maxLines: null,
-        decoration: InputDecoration(
-
-          border: InputBorder.none
-        ),
-        style: TextStyle(fontSize: 28),
-
-
-      ),
         floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-      if (_Subtitlecontroller.text != widget.docement['Subtitle']|| _titlecontroller.text!=widget.docement["Title"]) {
-        widget.docement.reference.update({
-          'Title':_titlecontroller.text,
-          'Subtitle': _Subtitlecontroller.text});
-      }
-      Navigator.pop(context);
-          }, label: Text("update",style: TextStyle(fontSize: 26),),
+          onPressed: () {
+            if (_newTitle != _initialTitle || _newSubtitle != _initialSubtitle) {
+              if (user != null) {
+                widget.document.reference.update({
+                  'Title': _newTitle,
+                  'Subtitle': _newSubtitle,
+                });
+              }
+            }
+            Navigator.pop(context);
+          },
+          label: Text(
+            "Update",
+            style: TextStyle(fontSize: 26),
+          ),
         ),
+      ),
     );
   }
 }
-
-
-

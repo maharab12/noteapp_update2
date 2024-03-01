@@ -1,70 +1,100 @@
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:testproject/main.dart';
-class addtofirebase extends StatefulWidget {
-  const addtofirebase({super.key});
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
+
+
+class AddToFirebase extends StatefulWidget {
+  const AddToFirebase({Key? key}) : super(key: key);
 
   @override
-  State<addtofirebase> createState() => _addtofirebaseState();
+  State<AddToFirebase> createState() => _AddToFirebaseState();
 }
 
-class _addtofirebaseState extends State<addtofirebase> {
-  late TextEditingController _titleController;
-  late TextEditingController _subtitleController;
-  late String _title = '';
-  @override
-  void initState() {
-    _titleController=TextEditingController();
-    _subtitleController=TextEditingController();
-    super.initState();
-  }
+class _AddToFirebaseState extends State<AddToFirebase> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _subtitleController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
-    var _sub="";
-    return Scaffold(
-      appBar: AppBar(
-          backgroundColor: Colors.black12,
-          title: TextField(
-        onChanged: (value){
-          _title=value;
-        },
-        controller: _titleController,
-        decoration: InputDecoration.collapsed(hintText: 'Give a title')
-      ),
-          leading: IconButton(icon: Icon(Icons.arrow_back),
-        onPressed: (){
-        Navigator.push(context, MaterialPageRoute(builder: (context)=>Homepage()));
-        },)),
-      body: Container(
-        child: TextField(
-          onChanged: (value){
-            _sub=value;
-          },
-          controller: _subtitleController,
-          maxLines: null,
-          decoration: InputDecoration(
-            border: InputBorder.none
+    return SafeArea(
+      child: Scaffold(
+        body: Column(
+            children: [
+              Stack(
+                children: [
+                  Container(
+                    height: MediaQuery.of(context).size.height/10,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 40, left:45),
+                      child: TextField(
+                        style: TextStyle(fontSize: 30),
+                        controller: _titleController,
+                        maxLength: 60,
+                        decoration: InputDecoration(
+                          hintText: "Title",
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: -2, // Adjust this value as needed to position the button
+                    left:2, // Adjust this value as needed to position the button
+                    child: IconButton(
+                      icon: Icon(Icons.arrow_back),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  )
+                ],
+              ),
+
+              Expanded(
+                child: ListView(
+                  children:[ TextField(
+
+
+                    controller: _subtitleController,
+                    style: TextStyle(fontSize: 28),
+                    decoration: InputDecoration(
+                      hintText: "Title will not save withour this any data",
+                    border: InputBorder.none
+                    ),
+                    maxLines: null,
+
+
+
+                  ),
+                ]),
+              ),
+            ],
           ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: ()  {
+
+              final User? user = FirebaseAuth.instance.currentUser;
+              final subtitle = _subtitleController.text.trim();
+              print("Subtitle: '$subtitle'");
+              if (user != null && subtitle.isNotEmpty) {
+                 FirebaseFirestore.instance.collection('notes').add({
+                  'userId': user.uid,
+                  'Title': _titleController.text,
+                  'Subtitle': subtitle,
+                });
+              }
+                Navigator.pop(context);
+              },
+
+          child: Text("Save",style: TextStyle(fontSize: 20),),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(onPressed: () {
-        if(_sub.isNotEmpty) {
-
-          FirebaseFirestore.instance.collection('2').add({
-            'Subtitle':FirebaseFirestore.instance.collection('2').add({
-              'Title':_title,
-              'Subtitle':_sub
-
-            })
-          });
-          Navigator.push(context, MaterialPageRoute(builder: (context)=>Homepage()));
-        }
-      },
-      child: Text("save",style: TextStyle(fontSize: 25),)),
-    );
+    ));
   }
 }
-
-
-
 
